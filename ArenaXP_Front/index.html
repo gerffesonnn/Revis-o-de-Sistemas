@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArenaXP — Controle de Estoque & Equipamentos</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo-badge">XP</span>
+            <div>
+                <h1>ArenaXP</h1>
+                <p>Gestão de Patrimônio, Estoque & Movimentações</p>
+            </div>
+        </div>
+        <div class="user-bar">
+            <span id="usuario-logado" class="user-badge">Carregando usuário...</span>
+            <button type="button" class="btn-secondary" onclick="fazerLogout()">Sair</button>
+        </div>
+    </header>
+
+    <section class="dashboard-grid">
+        <div class="stat-card">
+            <span class="stat-label">Tipos de Equipamentos</span>
+            <strong id="stat-total-equipamentos" class="stat-value">0</strong>
+        </div>
+        <div class="stat-card">
+            <span class="stat-label">Total de Unidades em Estoque</span>
+            <strong id="stat-total-unidades" class="stat-value">0</strong>
+        </div>
+        <div class="stat-card alerta">
+            <span class="stat-label">Itens em Estoque Crítico</span>
+            <strong id="stat-itens-criticos" class="stat-value">0</strong>
+        </div>
+    </section>
+
+    <div id="alerta-critico-banner" class="critico-banner hidden"></div>
+    <div id="feedback" class="feedback hidden"></div>
+
+    <nav class="tabs">
+        <button class="tab-btn active" data-tab="equipamentos">Equipamentos</button>
+        <button class="tab-btn" data-tab="movimentacoes">Movimentações (Entrada / Saída)</button>
+    </nav>
+
+    <main class="container">
+        <section id="tab-equipamentos" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h2 id="titulo-form-equipamento">Cadastrar Novo Equipamento</h2>
+                    <button type="button" id="btn-cancelar-edicao" class="btn-secondary hidden" onclick="cancelarEdicao()">Cancelar Edição</button>
+                </div>
+                <form id="form-equipamento" class="grid-form">
+                    <input type="hidden" id="eq-id">
+                    <div class="field">
+                        <label for="eq-codigo">Código Patrimônio</label>
+                        <input type="text" id="eq-codigo" maxlength="30" placeholder="Ex: PAT-001" required>
+                    </div>
+                    <div class="field">
+                        <label for="eq-nome">Nome do Equipamento</label>
+                        <input type="text" id="eq-nome" maxlength="120" placeholder="Ex: Headset HyperX Cloud II" required>
+                    </div>
+                    <div class="field">
+                        <label for="eq-categoria">Categoria</label>
+                        <input type="text" id="eq-categoria" maxlength="50" placeholder="Ex: Periféricos, PC, Console" required>
+                    </div>
+                    <div class="field">
+                        <label for="eq-especificacao">Especificação Técnica</label>
+                        <input type="text" id="eq-especificacao" maxlength="255" placeholder="Ex: USB 7.1 Surround, Cabo 2m" required>
+                    </div>
+                    <div class="field">
+                        <label for="eq-qtd">Quantidade Atual</label>
+                        <input type="number" id="eq-qtd" min="0" value="0" required>
+                    </div>
+                    <div class="field">
+                        <label for="eq-minimo">Estoque Mínimo</label>
+                        <input type="number" id="eq-minimo" min="0" value="1" required>
+                    </div>
+                    <div class="field action">
+                        <button type="submit" id="btn-salvar-equipamento" class="btn-primary">Salvar Equipamento</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header wrap">
+                    <h2>Inventário de Equipamentos</h2>
+                    <div class="filter-bar">
+                        <input type="text" id="filtro-termo" placeholder="Buscar por nome ou patrimônio...">
+                        <input type="text" id="filtro-categoria" placeholder="Filtrar categoria...">
+                        <button type="button" class="btn-secondary" onclick="carregarEquipamentos()">Filtrar</button>
+                        <button type="button" class="btn-secondary" onclick="limparFiltros()">Limpar</button>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Patrimônio</th>
+                                <th>Nome</th>
+                                <th>Categoria</th>
+                                <th>Especificação</th>
+                                <th>Qtd Atual</th>
+                                <th>Mínimo</th>
+                                <th>Status</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-equipamentos"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="tab-movimentacoes" class="tab-content">
+            <div class="card">
+                <h2>Registrar Movimentação de Estoque</h2>
+                <form id="form-movimentacao" class="grid-form">
+                    <div class="field">
+                        <label for="mov-equipamento">Equipamento</label>
+                        <select id="mov-equipamento" required>
+                            <option value="">Selecione um equipamento...</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="mov-tipo">Tipo de Movimentação</label>
+                        <select id="mov-tipo" required>
+                            <option value="ENTRADA">ENTRADA (+)</option>
+                            <option value="SAIDA">SAIDA (-)</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="mov-quantidade">Quantidade</label>
+                        <input type="number" id="mov-quantidade" min="1" value="1" required>
+                    </div>
+                    <div class="field">
+                        <label for="mov-datahora">Data e Hora</label>
+                        <input type="datetime-local" id="mov-datahora" required>
+                    </div>
+                    <div class="field">
+                        <label for="mov-obs">Observação / Evento</label>
+                        <input type="text" id="mov-obs" maxlength="255" placeholder="Ex: Torneio Valorant / Reposição">
+                    </div>
+                    <div class="field action">
+                        <button type="submit" class="btn-primary">Registrar Movimentação</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Histórico de Movimentações</h2>
+                    <button type="button" class="btn-secondary" onclick="carregarMovimentacoes()">Atualizar</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th><th>Data/Hora</th><th>Tipo</th><th>Equipamento</th>
+                                <th>Qtd</th><th>Responsável</th><th>Observação / Evento</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-movimentacoes"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

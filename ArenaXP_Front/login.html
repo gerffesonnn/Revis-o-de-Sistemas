@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ArenaXP — Acesso ao Sistema</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <div class="brand center">
+            <span class="logo-badge">XP</span>
+            <div>
+                <h1>ArenaXP</h1>
+                <p>Controle de Estoque & Equipamentos</p>
+            </div>
+        </div>
+
+        <div class="tabs" style="padding: 0; justify-content: center;">
+            <button type="button" class="tab-btn active" id="btn-modo-login" onclick="alternarModo('login')">Entrar</button>
+            <button type="button" class="tab-btn" id="btn-modo-cadastro" onclick="alternarModo('cadastro')">Criar Conta</button>
+        </div>
+
+        <div id="login-feedback" class="feedback hidden" style="margin: 0;"></div>
+
+        <form id="form-login" class="stack-form">
+            <div class="field">
+                <label for="login-email">E-mail</label>
+                <input type="email" id="login-email" placeholder="admin@arenaxp.com" required>
+            </div>
+            <div class="field">
+                <label for="login-senha">Senha</label>
+                <input type="password" id="login-senha" placeholder="••••••••" required>
+            </div>
+            <button type="submit" class="btn-primary">Entrar no Sistema</button>
+        </form>
+
+        <form id="form-cadastro" class="stack-form hidden">
+            <div class="field">
+                <label for="cad-nome">Nome Completo</label>
+                <input type="text" id="cad-nome" maxlength="100" placeholder="Seu nome" required>
+            </div>
+            <div class="field">
+                <label for="cad-email">E-mail</label>
+                <input type="email" id="cad-email" maxlength="120" placeholder="voce@arenaxp.com" required>
+            </div>
+            <div class="field">
+                <label for="cad-senha">Senha</label>
+                <input type="password" id="cad-senha" placeholder="Crie uma senha" required>
+            </div>
+            <div class="field">
+                <label for="cad-perfil">Perfil</label>
+                <select id="cad-perfil">
+                    <option value="ADMIN">ADMIN</option>
+                    <option value="OPERADOR">OPERADOR</option>
+                </select>
+            </div>
+            <button type="submit" class="btn-primary">Criar Conta e Entrar</button>
+        </form>
+    </div>
+
+    <script>
+        const API_URL = `http://${window.location.hostname || "localhost"}:8080`;
+
+        function alternarModo(modo) {
+            const isLogin = modo === "login";
+            document.getElementById("form-login").classList.toggle("hidden", !isLogin);
+            document.getElementById("form-cadastro").classList.toggle("hidden", isLogin);
+            document.getElementById("btn-modo-login").classList.toggle("active", isLogin);
+            document.getElementById("btn-modo-cadastro").classList.toggle("active", !isLogin);
+            document.getElementById("login-feedback").classList.add("hidden");
+        }
+
+        function exibirErro(erro) {
+            const box = document.getElementById("login-feedback");
+            box.textContent = erro.name === "TypeError"
+                ? `Sem conexão com o servidor (${API_URL}). Verifique o IntelliJ e o CorsConfig.`
+                : erro.message;
+            box.className = "feedback erro";
+        }
+
+        document.getElementById("form-login").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            try {
+                const resposta = await fetch(`${API_URL}/api/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        email: document.getElementById("login-email").value.trim(),
+                        senha: document.getElementById("login-senha").value
+                    })
+                });
+                if (!resposta.ok) {
+                    const err = await resposta.json().catch(() => ({}));
+                    throw new Error(err.erro || err.message || "E-mail ou senha inválidos.");
+                }
+
+                const verificacao = await fetch(`${API_URL}/api/auth/me`, {
+                    credentials: "include"
+                });
+                if (!verificacao.ok) {
+                    throw new Error("Login realizado, mas o servidor não manteve a sessão ativa. Verifique CORS e cookies.");
+                }
+
+                window.location.href = "index.html";
+            } catch (erro) {
+                exibirErro(erro);
+            }
+        });
+
+        document.getElementById("form-cadastro").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            try {
+                const resposta = await fetch(`${API_URL}/api/auth/registrar`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    credentials: "include",
+                    body: JSON.stringify({
+                        nome: document.getElementById("cad-nome").value.trim(),
+                        email: document.getElementById("cad-email").value.trim(),
+                        senha: document.getElementById("cad-senha").value,
+                        perfil: document.getElementById("cad-perfil").value
+                    })
+                });
+                if (!resposta.ok) {
+                    const err = await resposta.json().catch(() => ({}));
+                    throw new Error(err.erro || err.message || "Erro ao criar conta.");
+                }
+
+                const verificacao = await fetch(`${API_URL}/api/auth/me`, {
+                    credentials: "include"
+                });
+                if (!verificacao.ok) {
+                    throw new Error("Conta criada, mas o servidor não manteve a sessão ativa. Verifique CORS e cookies.");
+                }
+
+                window.location.href = "index.html";
+            } catch (erro) {
+                exibirErro(erro);
+            }
+        });
+    </script>
+</body>
+</html>
